@@ -1,0 +1,56 @@
+@charset "utf-8";
+* {box-sizing: content-box;margin: 0px;padding: 0px;}
+html {-webkit-text-size-adjust: 100%;-ms-text-size-adjust: 100%;text-size-adjust: 100%;}
+body {
+	color: #333;font-size: 14px;font-family: "Microsoft Yahei Font";
+}
+table {border-collapse: collapse;border-spacing: 0;font-size: inherit;}
+li {list-style: none;}
+dt+dd,dd,dt,ul,ol,p,span,i,b{
+	padding: 0px;margin: 0px;font-weight: normal;font-style: normal;
+}
+button,input,textarea{border:none;outline: none;font-family: 'Microsoft Yahei Font' ;}
+img{border: none;}
+a{text-decoration: none;}
+/**	清除浮动 开始**/
+.clear:after {display:block;clear:both;content: ' ';}
+.clear {zoom: 1;}
+/**	清除浮动 结束**/
+
+body{
+	background: #d5ebff;
+}
+/*微服务架构头部菜单  ******  开始*/
+#microHomeHeader{
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	right:0px;
+	z-index: 1;
+}
+
+
+/*自定义滚动条 ****** 开始*/
+::-webkit-scrollbar{
+  width:4px;
+}
+/*滚动条的轨道*/
+::-webkit-scrollbar-track{
+  background:transparent;
+}
+/*滚动条的滑块按钮*/
+::-webkit-scrollbar-thumb{
+  background-color: #99dbd7;
+}
+/*自定义滚动条 ****** 结束*/
+
+/*iconfont 字体图标修改    开始*/
+
+/*iconfont 字体图标修改    结束*/
+
+@media screen and (min-width:0px) and (max-width:1367px){
+	.{
+		width:145px !important;
+	}
+}
+

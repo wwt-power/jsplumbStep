@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<head>
+	<meta charset="UTF-8">
+	<title>微服务构建平台</title>
+	<link rel="stylesheet" href="css/iconfont.css">
+	<link rel="stylesheet" href="css/elementui.css">
+	<link rel="stylesheet" href="css/microService.css?v=0.1" >
+	<!-- js -->
+	<script src="js/vue.min.js"></script>
+	<script src="js/elementui.js"></script>
+	<script src="js/jquery-2.1.1.min.js"></script>
+	<script src="js/zk.js"></script>
+	<script src="js/zkvue.js"></script>
+	<style type="text/css">
+		i{
+			color: #00a4ff ;
+		}
+	</style>
+</head>
+<body>
+	<div id="checkboxes">
+		<template>
+			<div>
+				<el-tree :data="data" :props="defaultProps" default-expand-all highlight-current>
+					<span slot-scope="{ node, data }">
+						<i :class="data.icon"></i>
+						<span style="padding-left: 4px;">{{node.label}}</span>
+					</span>
+				</el-tree>
+			</div>
+		</template>
+	</div>
+	<script>
+		var menus = [
+			{
+				'menuId': 1,
+				'menuName': '系统管理',
+				'icon': 'el-icon-menu',
+				'children': [
+					{
+						'menuId': 100,
+						'menuName': '用户管理',
+						'icon': 'el-icon-folder',
+						'children': [
+							{
+								'menuId': 1000,
+								'menuName': '用户查询',
+								'icon': 'el-icon-folder'
+							},
+							{
+								'menuId': 1001,
+								'menuName': '用户新增',
+								'icon': 'el-icon-folder'
+							},
+							{
+								'menuId': 1002,
+								'menuName': '用户修改',
+								'icon': 'el-icon-folder'
+							},
+							{
+								'menuId': 1003,
+								'menuName': '用户删除',
+								'icon': 'el-icon-folder'
+							}
+						]
+					},
+					{
+						'menuId': 101,
+						'menuName': '角色管理',
+						'icon': 'el-icon-folder-opened',
+						'children': [
+							{
+								'menuId': 1006,
+								'menuName': '角色查询',
+								'icon': 'el-icon-folder-opened'
+							},
+							{
+								'menuId': 1007,
+								'menuName': '角色新增',
+								'icon': 'el-icon-folder-opened'
+							},
+							{
+								'menuId': 1008,
+								'menuName': '角色修改',
+								'icon': 'el-icon-folder-opened'
+							},
+							{
+								'menuId': 1011,
+								'menuName': '删除角色',
+								'icon': 'el-icon-folder-opened'
+							}
+						]
+					}
+				]
+			}
+		];
+
+		var checkboxes = new Vue({
+			el: "#checkboxes" ,
+			data () {
+				return {
+					data: menus,
+					defaultProps: {
+						children: 'children',
+						label: 'menuName'
+					}
+				};
+			},
+		})
+	</script>
+</body>
+</html>
