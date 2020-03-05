@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>流程图</title>
+	<link rel="stylesheet" href="css/elementui.css">
+	<!-- js -->
+	<script src="js/vue.min.js"></script>
+	<script src="js/elementui.js"></script>
+	<script src="js/jquery-2.1.1.min.js"></script>
+	<!-- 流程拖动 -->
+	<script src="js/jquery-ui.min.js"></script>
+    <script src="js/jsplumb.min.js"></script>
+    <script src="js/layer/layer.js"></script>
+	<style>
+		*{margin: 0;padding: 0;}
+		html,body{height: 100%;}
+		.workflow{
+			line-height: 47px;height: 47px;border-bottom: 1px solid #e3e3e3;
+		}
+		.workflow ol,.workflow ol li{float: left;}
+		.workflow button{float: right;margin: 14px 10px 0px 0px;cursor: pointer;}
+		.workflow button i{font-size: 20px;}
+		.workflow ol li{
+			width: 90px;text-align: center;font-family:Microsoft YaHei;font-size: 16px;color: #333;cursor: pointer;
+		}
+	    .node{
+	        position: absolute;
+	        cursor: pointer;
+	        text-align: center;
+	        color: black;
+	    }
+	    .node:hover{
+	        border: 1px dashed #ff6600;
+	    }
+	    .node-border {
+	        opacity: 0.8;
+	        filter: alpha(opacity=80);
+	        border: 1px solid #04b5ab;
+			background: -webkit-linear-gradient(rgba(255,255,255,0.5) , rgba(101,216,192,0.5));
+			background: -o-linear-gradient(rgba(255,255,255,0.5) , rgba(101,216,192,0.5));
+			background: -moz-linear-gradient(rgba(255,255,255,0.5) , rgba(101,216,192,0.5));
+			background: linear-gradient(rgba(255,255,255,0.5) , rgba(101,216,192,0.5));
+	    }
+	    .node-event {
+	        width:45px;
+	        padding: 10px;
+	        font-size: 9pt;
+	        cursor: pointer;
+	        height:65px;
+	        line-height: 30px;
+	        padding: 10px 0px;
+	    }
+	    .node-task {
+	        width:105px;
+	        padding: 10px;
+	        font-size: 9pt;
+	        cursor: pointer;
+	        height:65px;
+	        line-height: 25px;
+	        padding: 10px 0px;
+	        text-align: center;
+	    }
+	    .node .node-pic {
+	        display: block;
+	    }
+
+	    .designer-panel{
+	        min-height: 492px;
+	    }
+	    .jtk-drag {
+	        outline: 4px solid pink !important;
+	    }
+	    .node-select {
+	        background:#c4fffc;
+	    }
+	    
+	    .endpointHide{
+	        display: none;
+	    }
+	    .src-node {
+	        text-align:center;
+	        margin: 0 auto;
+	        margin-top: 15px;
+	        cursor: pointer;
+	        color: black;
+	    }
+	    /**流程设计区域网格显示*/
+	    .grid{
+	        background-image: linear-gradient(90deg, rgba(102, 102, 102, 0.15) 10%, rgba(102, 102, 102, 0) 10%),linear-gradient(rgba(102, 102, 102, 0.15) 10%, rgba(102, 102, 102, 0) 10%);
+	        background-size: 10px 10px;
+	    }
+	    /**连线点*/
+	    .ep {
+	        width: 16px; 
+	        height: 16px; 
+	        position: absolute;
+	        left: calc(100% - 8px); 
+	        top: calc(50% - 8px);
+	        cursor: pointer; 
+	        border-radius: 10px;
+	        background:#FF6600;
+	        z-index:100;
+	        display: none;
+	    }
+	    /*节点上的删除图标样式**/
+	    .shapeList .delete {
+	        width: 14px; 
+	        height: 14px; 
+	        position: absolute;
+	        left: calc(100% - 7px); 
+	        top: -7px;
+	        border-radius: 10px;
+	        border: 1px solid #ed5565;
+	        text-align: center;
+	        line-height: 12px;
+	        display: none;
+	    }
+	    .shapeList .delete i{
+	    	margin: 0;
+	    	font-size: 13px;
+	    	font-weight: bold;
+	    	color: #ff0000;
+	    }
+		.shapeList.circular  .delete{
+			left: calc(100% - 10px);
+			top: 2px;
+		}
+	    /*1月13日*/
+	    /** 清除浮动 开始**/
+	    .clear:after {display:block;clear:both;content: ' ';}
+	    .clear {zoom: 1;}
+
+	    .shapeList{
+			float: left;
+			padding: 0px 12px;
+			min-width: 48px;
+			height: 72px;
+			line-height: 72px;
+			margin-right: 50px;
+			margin-bottom: 20px;
+	        text-align: center;
+	    }
+	    .isIcon i{
+	    	margin: 16px 0px 0px 0px;
+	    	font-size: 24px;
+	        color: rgb(26, 179, 148);
+	    }
+	    .isIcon{line-height: 23px;}
+	    .workflowContent{height: 100%;}
+	    .workflowLeft{
+	        float: left;width: 300px;
+	        position: relative;
+	        height: 100%;
+	        box-shadow: 0px 2px 5px 0px rgba(153,153,153,0.3);
+	    }
+	    .workflowRight{
+	    	position: absolute;
+	    	left:320px;
+	    	top: 20px;right:20px;bottom: 0px;
+	    	background: #fff;
+	    }
+	    .workflowRightMain{
+			position: absolute;
+			width: 100%;
+			left: 0px;right: 0px;
+			top:0px;bottom: 0px;
+	        overflow: hidden;
+	    }
+	    .workflowShape{
+			position: absolute;
+			left:0px;right: 0px;
+			bottom: 0px;top: 48px;
+	    }
+	    .workflowShapeList{
+			font-size: 13px;
+	    	padding: 20px 0px 20px 50px;
+	    	overflow: hidden;
+	    	overflow-y: auto;
+	    }
+	    .workflowActionButtons{
+	    	height: 40px;
+	    	line-height: 40px;
+	    	padding: 2px 0px;
+	    	position: relative;
+	    	z-index: 101;
+	    }
+	    .workflowActionButtons ul{
+	    	float: right;
+	    	padding: 0px 10px;
+	    	background: #f8f8f8;
+	    }
+	    .workflowActionButtons ul li{
+	    	list-style: none;
+	    	float: left;
+	    	margin-left: 16px;
+	    }
+	    .workflowActionButtons ul li:first-child{
+	    	margin-left:0px;
+	    }
+	    .workflowActionButtons ul li button{
+	    	border: none;outline: none;border-radius: 2px;
+	    	min-width: 40px;padding: 0px 14px;
+	    	text-align: center;
+	    	height: 32px;
+	    	line-height: 32px;
+	    	font-size: 14px;
+	    	cursor: pointer;
+	    }
+	    .workflowActionButtons ul li button:hover{
+	    	background: #01A59C;color: #fff;
+	    }
+	    /*菱形*/
+	    .diamond{
+			/* padding: 0!important;
+			width: 62px !important;
+			height: 62px !important;
+			line-height: 62px !important; */
+	    	transform:rotate(45deg);
+	    	-ms-transform:rotate(45deg);
+	    	-moz-transform:rotate(45deg);
+	    	-webkit-transform:rotate(45deg);
+	    	-o-transform:rotate(45deg);
+			position: relative;
+	    }
+	    .diamond span{
+	    	display: block;
+	    	transform:rotate(-45deg);
+	    	-ms-transform:rotate(-45deg);
+	    	-moz-transform:rotate(-45deg);
+	    	-webkit-transform:rotate(-45deg);
+	    	-o-transform:rotate(-45deg); 
+			overflow: hidden;
+			white-space: nowrap;
+			text-overflow: ellipsis;
+			position: absolute;
+			left: -6px;
+			top: 1px;
+			width: 86px;
+	    }
+		.shapeList .delete{
+			line-height: 14px;
+			transform: rotate(90deg);
+			-ms-transform: rotate(90deg);
+			-moz-transform: rotate(90deg);
+			-webkit-transform: rotate(90deg);
+			-o-transform: rotate(90deg);
+		}
+		.shapeList.diamond .delete{
+			transform: rotate(-45deg);
+			-ms-transform: rotate(-45deg);
+			-moz-transform: rotate(-45deg);
+			-webkit-transform: rotate(-45deg);
+			-o-transform: rotate(-45deg);
+		}
+	    /*圆形*/
+	    .circular{border-radius: 50%;}
+	    /*圆角矩形*/
+	    .roundedRectangle{border-radius: 15px;margin-right:0 !important;}
+	</style>
+</head>
+<body>
+	<!-- 中间主要内容模块 ******** 开始 -->
+	<div class="workflowContent clear">
+	    <div class="workflowLeft">
+	    	<div class="workflow gwBottomBorder clear">
+				<ol class="clear">
+					<li class="active">工作流</li>
+				</ol>
+			</div>
+	        <div class="workflowShape">
+	            <div id="toolPanel" class="workflowShapeList">
+	                <div id="start" class="shapeList isIcon node-border" data-index="1">
+	                    <i class="el-icon-video-play"></i>
+	                    <span class="start">开始</span>
+	                </div>
+	                <div id="end" class="shapeList isIcon node-border" data-index="2">
+	                    <i class="el-icon-video-pause"></i>
+	                    <span class="end">结束</span>
+	                </div>
+	                <div id="diamond" class="shapeList node-border diamond" data-index="3">
+	                    <span class="diamond">菱形</span>
+	                </div>
+	                <div id="rectangular" class="shapeList node-border" data-index="4">
+	                    <span class="rectangular">矩形</span>
+	                </div>
+	                <div id="circular" class="shapeList node-border circular" data-index="5">
+	                    <span class="circular">圆形</span>
+	                </div>
+	                <div id="rounded" class="shapeList node-border roundedRectangle" data-index="6">
+	                    <span class="rounded">圆角矩形</span>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	    <div class="workflowRight">
+	        <div class="workflowActionButtons">
+	        	<ul class="clear">
+					<li><button id="clearCanvas">清空</button></li>
+					<li><button id="isGrid">隐藏网格</button></li>
+					<li><button id="importData">导入JSON</button></li>
+					<li><button id="saveJson">保存JSON</button></li>
+	        	</ul>
+	        </div>
+	        <div id="canvasPanel" class="grid workflowRightMain"></div>
+	    </div>
+	</div>
+
+	<script>
+	    //连接线路的样式
+	    var connectorPaintStyle = {
+	        strokeWidth: 1,
+	        stroke: "#333",
+	        joinstyle: "round",
+	        outlineStroke: "white",
+	        outlineWidth: 1
+	    },
+	    //鼠标放上去连接线路的样式
+	    connectorHoverStyle = {
+	        strokeWidth: 3,
+	        stroke: "#666",
+	        outlineWidth: 3,
+	        outlineStroke: "white"
+	    };
+
+	    var endpoint = {
+	        //锚点
+	        anchor:"Continuous",
+	        //连线形状
+	        connector: [ "Flowchart", { stub: [1, 1], gap: 1, cornerRadius: 5, alwaysRespectStubs: true}],
+	        connectorStyle: connectorPaintStyle,
+	        connectorHoverStyle: connectorHoverStyle,
+	        //拖动设置
+	        dragOptions: { },
+	        //设置箭头样式
+	        overlays: [
+	            [ "Label", {
+	                location: [0.5, 1.5],
+	                label: "Drag",
+	                cssClass: "endpointSourceLabel",
+	                visible:false
+	            } ]
+	        ]
+	    };
+	    //合并到一起
+	    var sourceEndpoint= $.extend({},{filter:".ep"},endpoint),
+	        targetEndpoint={
+	            //拖放设置
+	            dropOptions:{ hoverClass:"dragHover" },
+	            allowLoopback:true,
+	            //锚点
+	            anchor:"Continuous"
+	        };
+
+	    class Node {
+	        /**
+	        * canvasPanel: 画板对象
+	        * top
+	        * left
+	        * node  页面显示div
+	        * id
+	        * name
+	        */
+	        constructor(options){
+			
+	        	this.id = options.node.attr("id");
+	        	this.name = options.node.attr("name");
+	        	this.sign = options.node.attr("1");
+	            this.top = options.top;
+	            this.left = options.left;
+	            this.dom =  options.node.append($("<div class='ep'></div>")) //设置连线点
+	                     .append("<div class='delete'><i class='el-icon-close'></i></div>")//设置删除图标
+	                     .css("left", this.left+"px").css("top", this.top+"px").css("z-index",1).css("font-weight","bold");
+	            
+	           
+	        }
+	        //整个节点作为source或者target
+	        draw($canvasPanel){
+	            //画图
+	            var $node = this.dom;
+
+	            //绑定jsplumb
+	            if(this.name==="start" || this.name==="timer"){
+
+	                $canvasPanel.append($node);
+	                jsPlumb.makeSource($node,sourceEndpoint);
+	            }else if(this.name==="end"){
+
+	                $canvasPanel.append($node);
+	                jsPlumb.makeTarget($node,targetEndpoint);
+	            }else {
+
+	                $canvasPanel.append($node);
+	                jsPlumb.makeSource($node,sourceEndpoint);
+	                jsPlumb.makeTarget($node,targetEndpoint);
+	            }
+				console.log(this.id);
+	            jsPlumb.draggable(this.id,{
+	                containment:$canvasPanel,
+	                grid: [1, 1], //网格
+	                filter:".ep",
+	                scroll:true
+
+	            });
+	        }
+	    }
+	    $(function () {
+		init();
+			
+	    });
+		
+		
+		function modalAlert(content,type){
+	            layer.alert(content, {
+	                icon: type,
+	                title: "系统提示",
+	                btn: ['确认'],
+	                btnclass: ['btn btn-primary'],
+	            });
+	        }
+			
+			
+		
+		function init(){
+			console.log("onload");
+	        //封装
+	        $.extend({
+	            // 弹出层封装处理
+	            modal: {
+	                // 显示图标
+	                icon: function(type) {
+	                    var icon = "";
+	                    if (type == modal_status.WARNING) {
+	                        icon = 0;
+	                    } else if (type == modal_status.SUCCESS) {
+	                        icon = 1;
+	                    } else if (type == modal_status.FAIL) {
+	                        icon = 2;
+	                    } else {
+	                        icon = 3;
+	                    }
+	                    return icon;
+	                },
+	                // 消息提示
+	                msg: function(content, type) {
+	                    if (type != undefined) {
+	                        layer.msg(content, { icon: $.modal.icon(type), time: 1000, shift: 5 });
+	                    } else {
+	                        layer.msg(content);
+	                    }
+	                },
+	                // 错误消息
+	                msgError: function(content) {
+	                    $.modal.msg(content, modal_status.FAIL);
+	                },
+	                // 成功消息
+	                msgSuccess: function(content) {
+	                    $.modal.msg(content, modal_status.SUCCESS);
+	                },
+	                // 警告消息
+	                msgWarning: function(content) {
+	                    $.modal.msg(content, modal_status.WARNING);
+	                },
+	                // 弹出提示
+	                alert: function(content, type) {
+	                    layer.alert(content, {
+	                        icon: $.modal.icon(type),
+	                        title: "系统提示",
+	                        btn: ['确认'],
+	                        btnclass: ['btn btn-primary'],
+	                    });
+	                },
+	                // 消息提示并刷新父窗体
+	                msgReload: function(msg, type) {
+	                    layer.msg(msg, {
+	                        icon: $.modal.icon(type),
+	                        time: 500,
+	                        shade: [0.1, '#8F8F8F']
+	                    },
+	                    function() {
+	                        $.modal.reload();
+	                    });
+	                },
+	                // 错误提示
+	                alertError: function(content) {
+	                    $.modal.alert(content, modal_status.FAIL);
+	                },
+	                // 成功提示
+	                alertSuccess: function(content) {
+	                    $.modal.alert(content, modal_status.SUCCESS);
+	                },
+	                // 警告提示
+	                alertWarning: function(content) {
+	                    $.modal.alert(content, modal_status.WARNING);
+	                },
+	                // 关闭窗体
+	                close: function () {
+	                    var index = parent.layer.getFrameIndex(window.name);
+	                    parent.layer.close(index);
+	                },
+	                // 关闭全部窗体
+	                closeAll: function () {
+	                    layer.closeAll();
+	                },
+	                // 确认窗体
+	                confirm: function (content, callBack) {
+	                    layer.confirm(content, {
+	                        icon: 3,
+	                        title: "系统提示",
+	                        btn: ['确认', '取消'],
+	                        btnclass: ['btn btn-primary', 'btn btn-danger'],
+	                    }, function (index) {
+	                        layer.close(index);
+	                        callBack(true);
+	                    });
+	                }
+	            }
+	        });
+
+	        /** 弹窗状态码 */
+	        modal_status = {
+	            SUCCESS: "success",
+	            FAIL: "error",
+	            WARNING: "warning"
+	        };
+
+	        var idIndex = 100;
+
+	        var $canvasPanel = $( "#canvasPanel");
+
+		
+	        $("#toolPanel").children("div").addClass("src-node");
+
+	        $("#toolPanel").find("i").css({"display":"block"});
+
+	        $(".src-node").draggable({ 
+	            appendTo:"body",
+	            scroll:true,
+	            revert:true,
+	            start:function(event,ui){
+	                $(this).draggable('option','cursor','not-allowed');
+					
+	            },
+	            stop:function(event,ui){
+	                $(this).draggable('option','cursor','move');
+	            },
+	            helper: function(){
+	                //克隆节点并且加上连线点、删除图标
+	                return $(this).clone().removeClass("src-node").addClass("node");
+	            },
+	            scope: "ss",
+	            zIndex:99 
+	        });
+
+	        //默认拖拽选项箭头&链接节点
+	        jsPlumb.importDefaults({
+	            DragOptions: { cursor: 'pointer', zIndex: 2000 },
+	            ConnectionOverlays: [
+	                [ "Arrow", {//箭头
+	                    location: 1,
+	                    visible:true,
+	                    width:11,
+	                    length:11,
+	                    id:"ARROW",
+	                    events:{
+	                        click:function() { console.log("you clicked on the arrow overlay")}
+	                    }
+	                } ],
+	                [ "Label", {
+	                    location: 0.5,
+	                    id: "label",
+	                    cssClass: "aLabel",
+	                    events:{
+	                        tap:function() { console.log("you clicked on the label overlay"); }
+	                    }
+	                }]
+	            ],
+	            EndpointStyle : { display:"none"},
+	            Container: "canvasPanel"
+	        });
+
+	        
+	            
+	        
+
+	        $( "#canvasPanel" ).droppable({
+	            scope: "ss",
+	            drop: function( event, ui ) {
+					
+	                var left = parseInt(ui.offset.left - $(this).offset().left);
+	                var top = parseInt(ui.offset.top - $(this).offset().top);
+	                ///var $node = $(ui.helper).clone().css("left", left).css("top", top).css("z-index",0).css("font-weight","bold");
+	                idIndex++;
+					var name = $(ui.helper).children("span:first").attr("class");
+				
+	                var thisId = name+"-"+idIndex;
+	                var $node = $(ui.helper).clone().attr("id",thisId);
+					
+					
+	                var node = new Node({"top":top,"left":left,"node":$node});
+	                //jsPlumbNode(node.dom);
+	                node.draw($canvasPanel);
+
+	            }
+	        });
+
+	        
+	        function createNode($node,left,top){
+	            $node.css("left", left+"px").css("top", top+"px").css("z-index",0).css("font-weight","bold");
+	            $canvasPanel.append($node);
+	            jsPlumbNode($node);
+	        }
+
+	        //隐藏或显示左侧工具面板
+	        $("#showTool").click(function () {
+	            $(".designer-tool").toggle('slow');
+	            $(".designer-center").toggleClass('col-sm-10');
+	        });
+
+	        //鼠标移入节点内事件，显示连线图标
+	        $("#canvasPanel").on("mouseenter", ".node", function () {
+	            $(this).find(".ep").show();//显示连线点
+	            $(this).find(".delete").show();//显示删除图标
+	        });
+
+	        //鼠标移出节点内事件，隐藏连线图标
+	        $("#canvasPanel").on("mouseleave", ".node", function () {
+	            //jsPlumb.selectEndpoints({source:$(this).attr("id")}).addClass("endpointHide");
+	            $(this).find(".ep").hide();//隐藏连线点
+	            $(this).find(".delete").hide();//隐藏删除图标
+	        });
+
+	        //删除节点
+	        $("#canvasPanel").on("click", ".delete",function () {
+	            var $this = $(this);
+	            $.modal.confirm('确定要删除该节点吗',function(){
+	                jsPlumb.removeAllEndpoints($this.parent().attr("id"));
+	                $this.parent().remove();
+	            });
+	        });
+
+	        //节点点击选中效果
+	        $("#canvasPanel").on("click", ".node", function () {
+	            $(this).addClass("node-select").siblings('.node').removeClass('node-select');
+	        });
+
+	        //双击修改任务名称
+	        $("#canvasPanel").on("dblclick", "span", function () {
+	            var $this = $(this);
+	            layer.prompt({title: '任务名称', formType: 2, value: $this.text(),maxlength: 10}, function(text, index){
+	                layer.close(index);
+	                $this.text(text);
+	              });
+	            return false;
+	        });
+	        //清空画布
+	        $("#clearCanvas").click(function(){
+	            $.modal.confirm('确定要清空画布吗',function(){
+	                $canvasPanel.find(".delete").each(function(){
+	                    jsPlumb.removeAllEndpoints($(this).parent().attr("id"));
+	                    $(this).parent().remove();
+	                });
+	            });
+	        });
+	                       
+	        // 双击修改连线描述, 
+	        jsPlumb.bind('dblclick', function (conn, originalEvent) {
+	            var $this = $(this);
+	            layer.prompt({title: '连线名称', formType: 2, value: conn.getOverlay("label").getLabel(),maxlength: 20}, function(text, index){
+	                layer.close(index);
+	                conn.getOverlay("label").setLabel(text);
+	            });
+	            
+	            // $.modal.confirm('确定删除所点击的链接吗？',function(){
+	            //     jsPlumb.deleteConnection(conn);
+	            // });
+	        });
+
+	        // jsPlumb.bind('click', function (conn, originalEvent) {            
+	        //     $.modal.confirm('确定删除所点击的链接吗？',function(){
+	        //         jsPlumb.deleteConnection(conn);
+	        //     });
+	        // });
+
+	        jsPlumb.bind("connection", function (connInfo, originalEvent) {
+	            if (connInfo.connection.sourceId === connInfo.connection.targetId) { 
+	                jsPlumb.deleteConnection(connInfo.connection);
+	                $.modal.alertError("不能连接自己！");  
+	            }else{      
+	               console.log("连接"+connInfo.connection.sourceId+"==="+connInfo.connection.targetId);      
+	            }      
+	        });
+			//显示隐藏网格线
+			$("#isGrid").bind("click",function(){
+				$("#canvasPanel").toggleClass("grid");
+			});
+			
+		}
+		
+	    
+	    
+	    //保存json数据
+	    $("#saveJson").on('click', function(){
+	        save();
+	    });
+	    //序列化流程图数据,json格式
+	    function save(){
+	        var connects = [];
+	        $.each(jsPlumb.getConnections(), function (idx, connection) {
+	            connects.push({
+	                connectionId: connection.id,
+	                pageSourceId: connection.sourceId,
+	                pageTargetId: connection.targetId
+	            });
+	        });
+	        
+
+	        var blocks=[];//存储元素的数组
+	        $("#canvasPanel .shapeList").each(function(){
+	            var saveHtml = $.trim($(this).text()) ;
+	            blocks.push({
+	                BlockId:$(this).attr('id'),
+	                BlockContent:saveHtml,
+	                BlockX:parseInt($(this).css("left"), 10),
+	                BlockY:parseInt($(this).css("top"), 10)
+	            });
+	        });
+	        var serliza="{"+'"connects":'+JSON.stringify(connects)+',"block":'+JSON.stringify(blocks)+"}";
+
+	        layer.open({
+				title: '导出json数据保存流程图',
+	            type: 1,
+	            area: ['600px', '360px'],
+	            shadeClose: true, //点击遮罩关闭
+	            content: serliza
+	        });
+	    } 
+	    //导入数据
+	    $("#importData").on('click', function(){
+	        layer.prompt({title: '从json数据导入流程图', formType: 2 ,area:["500px","300px"],maxlength:"10000"}, function(value, index){
+	            layer.close(index);
+	            //alert(value);
+	            if(value!=''){
+					
+	                <!-- $('#canvasPanel').remove(); -->
+					<!-- $("#workflowRight").append('<div id="canvasPanel" class="grid workflowRightMain"></div>'); -->
+					<!-- $("#canvasPanel").html(""); -->
+					init();
+					console.log(value);
+	                var isloaded=loadJson(value);
+	            }
+	        });
+	        return false;
+	    })
+	    //从json数据导入流程图
+	    function loadJson(data){
+	        var unpack=JSON.parse(data);
+
+	        if(!unpack){
+	            return false;
+	        }
+
+	        flowConnector={
+	            anchors:["BottomCenter","TopCenter"],
+	            endpoints:["dot","blank"]
+	        };
+
+	        for(var i=0;i<unpack['block'].length;i++){
+	            var BlockId=unpack['block'][i]['BlockId'];
+	            var BlockContent=unpack['block'][i]['BlockContent'];
+	            var BlockX=unpack['block'][i]['BlockX'];
+	            var BlockY=unpack['block'][i]['BlockY'];
+
+	            var blockAttr=BlockId.split('-')[1];
+				
+				
+
+	            <!-- var htmlText='<div class="shapeList node-border ui-draggable ui-draggable-handle node ui-draggable-dragging jtk-droppable jtk-managed jtk-draggable node-select '+blockAttr+'" style="position:absolute;left:'+BlockX+'px;top:'+BlockY+'px;" id="'+BlockId+'"><span>'+BlockContent+'</span><div class="ep" style="display:none;"></div><div class="delete"><i class="el-icon-close"></i></div></div>'; -->
+	            
+				<!-- createNode(htmlText,BlockX,Block); -->
+				
+				<!-- $("#canvasPanel").append(htmlText); -->
+					var innerHtml = $("#"+BlockId.split('-')[0]).prop("outerHTML");
+					var $node = $(innerHtml).clone().removeClass("src-node").addClass("node").clone().attr("id",BlockId);
+					
+					
+	                var node = new Node({"top":BlockY,"left":BlockX,"node":$node});
+					
+					$("#"+BlockId).draggable('option','cursor','move');
+	                //jsPlumbNode(node.dom);
+					
+					
+	                node.draw($("#canvasPanel"));
+					
+				//$('#canvasPanel').append(htmlText);
+	            // console.log(htmlText);
+	        }
+
+	        for(i=0;i<unpack['connects'].length;i++){
+	            var ConnectionId=unpack['connects'][i]['connectionId'];
+	            var PageSourceId=unpack['connects'][i]['pageSourceId'];
+	            var PageTargetId=unpack['connects'][i]['pageTargetId'];
+	            jsPlumb.connect({
+					source: PageSourceId,
+					target: PageTargetId,
+					endpoint: 'Dot'
+				});
+				jsPlumb.draggable(PageSourceId,PageTargetId);
+	        }
+	        return true;
+	    }
+		
+		
+		var common = {
+		  isSource: true,
+		  isTarget: true,
+		  connector: ['Straight'],
+		  maxConnections: -1
+		}
+		
+	</script>
+
+	<!-- 中间主要内容模块 ******** 结束 -->
+</body>
+</html>
